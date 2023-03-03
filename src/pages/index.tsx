@@ -4,6 +4,7 @@ import { getCookie, getMenu } from '@/requests';
 import { useEffect, useState } from 'react';
 import type { MenuItem } from "@/types";
 import { Select } from 'antd';
+import { createRequestFunction } from "@/utils";
 export default function HomePage() {
   const [menus, setMenu] = useState<MenuItem[]>([]);
   const [currentMenu, setCurrentMenu] = useState<number>();
@@ -13,6 +14,22 @@ export default function HomePage() {
       menus.sort((a, b) => b.add_time - a.add_time)
       setMenu(menus);
       setCurrentMenu(menus[0]._id);
+      const query = {
+        name: {
+          description: '明星',
+          type: 'string'
+        },
+        num: {
+          description: '明星fsdf',
+          type: 'integer'
+        },
+        pow: {
+          description: '明星sdfasd',
+          type: 'string'
+        }
+      }
+      const r = createRequestFunction('post', 'getIndexData','/api/test',{});
+      console.log(r);
     })
   }, [])
   function handleChange(value: number) {

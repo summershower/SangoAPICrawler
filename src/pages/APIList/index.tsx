@@ -4,6 +4,7 @@ import { getCookie, getAPIs, getAPIInformation } from '@/requests';
 import type { APIListItem, SimpleAPIListItem } from '@/types'
 import styles from './index.less'
 import APIItem from './Components/APIItem';
+import { objectToInterface } from '@/utils'
 
 export default function APIList({ catId }: { catId: number | undefined }) {
     const [Apis, setApis] = useState<SimpleAPIListItem[]>([]);
@@ -27,6 +28,7 @@ export default function APIList({ catId }: { catId: number | undefined }) {
                     const query = JSON.parse(res?.['req_body_other'] || '{}');
                     const result = JSON.parse(res?.['res_body'] || '{}')?.properties?.data?.properties || {};
                     console.log(query, result);
+                    console.log(objectToInterface(result,true));
                 })
             })
         })

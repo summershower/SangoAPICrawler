@@ -67,3 +67,48 @@ export interface APIInformationItem {
     __v: number;
     _id: number;
 }
+interface t {
+    clubList: {
+    clubId: string;
+    clubName: string;
+    clubUrl: string;
+    score: number;
+    rank: number;
+    topUsers: {
+    userId: string;
+    locationId: string;
+    displayUserId: string;
+    headImgFileUrl: string;
+    nickname: string;
+    systemLanguage: string;
+    gender: number;
+    grade: number;
+    createDate: string;
+    deviceNo: string;
+    }[];
+    countryUrl: string;
+    area: string;
+    }[];
+    totalNum: number;
+    myRank: {
+    clubId: string;
+    clubName: string;
+    clubUrl: string;
+    score: number;
+    rank: number;
+    topUsers: {
+    userId: string;
+    locationId: string;
+    displayUserId: string;
+    headImgFileUrl: string;
+    nickname: string;
+    systemLanguage: string;
+    gender: number;
+    grade: number;
+    createDate: string;
+    deviceNo: string;
+    }[];
+    countryUrl: string;
+    area: string;
+    };
+    }
