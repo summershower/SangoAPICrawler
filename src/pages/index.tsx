@@ -2,7 +2,7 @@ import styles from './index.less'
 import { getCookie, getMenu, getAPIs, getAPIInformation } from '@/requests';
 import { useEffect, useState, useRef } from 'react';
 import type { MenuItem, SimpleAPIListItem } from "@/types";
-import { Select, Radio, Button } from 'antd';
+import { Select, Radio, Button, message } from 'antd';
 import type { RadioChangeEvent } from 'antd';
 import APIItem from "./APIItem";
 import Code from './Code'
@@ -11,7 +11,7 @@ export default function HomePage() {
   const [currentMenu, setCurrentMenu] = useState<number>();
   const [Apis, setApis] = useState<SimpleAPIListItem[]>([]);
   const [formatMode, setFormatterMode] = useState<'R' | 'T' | 'M'>('R');
-  const codeRef = useRef();
+  const codeRef = useRef(null);
 
   useEffect(() => {
     getCookie().then(async () => {
@@ -48,6 +48,12 @@ export default function HomePage() {
           })
         })
 
+        // 检查函数名
+        s.some(v => {
+          if (!/^[a-z]{1,}[A-Z]{1}\w+/.test(v.fnName)) {
+            message.warning("存在异常请求方法名，请手动输入")
+          }
+        })
         setApis(s);
 
         s.forEach(v => {

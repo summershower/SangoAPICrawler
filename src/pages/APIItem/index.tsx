@@ -49,7 +49,7 @@ const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function
                 tree.push({
                     title: TreeTitle(key, value.type, value.description),
                     key: currentKey + index,
-                    children: value.properties ? resultToTree(value.properties, currentKey + index + '-') : [],
+                    children: value.properties ? resultToTree(value.properties, currentKey + index + '-') : value.items? resultToTree(value.items.properties, currentKey + index + '-') : [],
                 })
             })
             return tree;
@@ -66,7 +66,7 @@ const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function
         <div className={styles.path}>{info?.path}</div>
         <div className={styles.name}>
             <span>函数名：</span>
-            <Input placeholder='输入请求函数名(驼峰命名)' value={info.fnName} onChange={handleInputFnName} status={/^[a-z]{1,}[A-Z]{1}\w+/.test(inputContent) ? '' : 'error'} />
+            <Input placeholder='输入请求函数名(驼峰命名)' value={info.fnName} onChange={handleInputFnName} status={/^[a-z]{1,}[A-Z]{1}\w+/.test(info.fnName) ? '' : 'error'} />
         </div>
         {info.query !== undefined || info.result !== undefined ? <div className={styles.details}>
             {info.query && <div className={styles.query}>

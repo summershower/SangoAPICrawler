@@ -4,7 +4,7 @@ import { EditorView, basicSetup } from 'codemirror';
 import type { SimpleAPIListItem } from '@/types';
 import styles from './index.less'
 import { useEffect, forwardRef, useImperativeHandle } from 'react';
-import { createType, createRequests } from '@/utils';
+import { createType, createRequests, createMock } from '@/utils';
 import { copy } from '@/utils';
 let view: EditorView;
 let content = '';
@@ -32,13 +32,10 @@ const Code = forwardRef<{ handleCopy: Function }, { apis: SimpleAPIListItem[], f
         let nextContent = ''
         if (formatMode === 'R') {
             nextContent = createRequests(apis);
-
         } else if (formatMode === 'T') {
-
             nextContent = createType(apis);
-
         } else if (formatMode === 'M') {
-
+            nextContent = createMock(apis);
         }
 
         if (nextContent !== content) {

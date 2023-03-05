@@ -4,7 +4,7 @@ import { SimpleAPIListItem } from '@/types';
 
 const beautifyOptions = { indent_size: 2, space_in_empty_paren: true };
 
-export const createRequestFunction = (method: string, fnName: string, url: string, query: Object, title: string, required: string[]): [string, string] => {
+export const createRequestFunction = (method: string, fnName: string, url: string, query: Object, title: string, required: string[], result: Object): [string, string] => {
     const apiKey = fnName.replace(/[A-Z]/g, "_$&").toUpperCase();
     const apiStr = `${apiKey}: '${url}', // ${title}\r\n`
     const typeName = fnName.replace(/^[a-z]{1,}[^A-Z]+/, '');
@@ -19,11 +19,11 @@ export const createRequestFunction = (method: string, fnName: string, url: strin
     }
     const fnStr = `/**
     * ${title}
-    ${Object.entries(query).reduce((pre, [key, value]) => pre + `* @param {${value.type === 'integer' ? 'number' : value.type}} ${key} ${value.description.replaceAll('\r', ' ').replaceAll('\n', ' ')}
+    ${Object.entries(query).sort(requireSortFn).reduce((pre, [key, value]) => pre + `* @param {${value.type === 'integer' ? 'number' : value.type}} ${key} ${value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ')}
     `, '')}*/
    export const ${fnName} = ${Object.keys(query).length ? '(' + Object.entries(query).sort(requireSortFn).reduce((pre, [key, value], index) => {
         return `${pre}${key}${required.includes(key) ? '' : '?'}: ${value.type === 'integer' ? 'number' : value.type}${index < Object.entries(query).length - 1 ? ',' : ''}`
-    }, '') + ') =>' : ''}request<${typeName}>(API.${apiKey}, '${method.toLowerCase()}'${Object.keys(query).length ? ', { ' + Object.keys(query).join(',') + ' }' : ''})${Object.keys(query).length ? '();' : ';'}
+    }, '') + ') =>' : ''}request${Object.keys(result).length ? '<' + typeName + '>' : ''}(API.${apiKey}, '${method.toLowerCase()}'${Object.keys(query).length ? ', { ' + Object.keys(query).sort((a, b) => required.indexOf(b) - required.indexOf(a)).join(',') + ' }' : ''})${Object.keys(query).length ? '();' : ';'}
     `
     return [apiStr, fnStr];
 }
@@ -41,7 +41,7 @@ export const createRequests = (apis: SimpleAPIListItem[]) => {
     let fnText = '';
     let type: string[] = [];
     apis.forEach(api => {
-        const [apiStr, fnStr] = createRequestFunction(api.method, api.fnName, api.path, api.query || {}, api.title, api?.queryRequired || []);
+        const [apiStr, fnStr] = createRequestFunction(api.method, api.fnName, api.path, api.query || {}, api.title, api?.queryRequired || [], api.result || {});
         apiText += apiStr;
         fnText += fnStr + '\r\n';
         const typeName = api.fnName.replace(/^[a-z]{1,}[^A-Z]+/, '');
@@ -53,7 +53,7 @@ export const createRequests = (apis: SimpleAPIListItem[]) => {
 
 export function objectToInterface(obj: Object): string {
     if (obj?.toString() !== '[object Object]') return ''
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}?: ${value.type === 'integer' ? 'number' : value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value.description.replaceAll('\r', ' ').replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}?: ${value.type === 'integer' ? 'number' : value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
     return str
 }
 
@@ -75,12 +75,13 @@ export const replaceRepeatInterface = (raw: string, count = 1) => {
     repeat.forEach(([key, value]) => {
         if (value.length > 1) {
             raw = raw.replaceAll(key, `请命名${count}`)
-            raw = `interface 请命名${count++}` + key + '\r\n' + raw;
+            const headIndex = raw.indexOf('export');
+            raw = raw.slice(0, headIndex) + `interface 请命名${count++}` + key + '\r\n' + raw.slice(headIndex);
         }
     })
     const repeat2 = getRepeatInterface(raw);
     if (repeat2.some(([key, value]) => value.length > 1)) {
-        raw = replaceRepeatInterface(raw, count + 1)
+        raw = replaceRepeatInterface(raw, count)
     }
     return raw
 }
@@ -107,14 +108,69 @@ export const createType = (apis: SimpleAPIListItem[]): string => {
     return resultText;
 }
 
+
+export function objectToMock(obj: Object): string {
+    if (obj?.toString() !== '[object Object]') return ''
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}: ${value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
+    return str
+}
+export const replaceRepeatMock = (raw: string, count = 1) => {
+    const repeat = getRepeatInterface(raw);
+    repeat.forEach(([key, value]) => {
+        if (value.length > 1) {
+            raw = raw.replaceAll(key, `请命名${count}`)
+            const headIndex = raw.indexOf('export');
+            raw = raw.slice(0, headIndex) + `interface 请命名${count++}` + key + '\r\n' + raw.slice(headIndex);
+        }
+    })
+    const repeat2 = getRepeatInterface(raw);
+    if (repeat2.some(([key, value]) => value.length > 1)) {
+        raw = replaceRepeatInterface(raw, count)
+    }
+    return raw
+}
+
+
+const createMockObject = (obj: Object): string => {
+    if (obj?.toString() !== '[object Object]') return ''
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : '"@' + value.type + '"'};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
+    return str
+}
+const createMockFn = (query: Object, required: string[], result: Object) => {
+    const requireSortFn = ([key1]: any[], [key2]: any[]) => {
+        if (required.includes(key1) && !required.includes(key2)) {
+            return -1;
+        } else if (required.includes(key2) && !required.includes(key1)) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    const fnText = '(' + Object.entries(query).sort(requireSortFn).reduce((pre, [key, value], index) => {
+        return `${pre}${key}${required.includes(key) ? '' : '?'}: ${value.type}${index < Object.keys(query).length - 1 ? ',' : ''}`
+    }, '') + ') =>' + `return { ${createMockObject(result)} }`;
+    return fnText
+}
 export const createMock = (apis: SimpleAPIListItem[]) => {
     let template = `import { useMock } from '@/utils/hooks';
     import * as requests from './requests';
     
     const mockData: Partial<Record<keyof typeof requests, Function | Object>> = {
+        %R%
     };
     
     export default useMock(requests, mockData);`
+    let mockText = '';
+
+    apis.forEach(api => {
+        const keyNames = api.fnName;
+        if (Object.keys(api?.query || {}).length) {
+            mockText += keyNames + ':' + createMockFn(api?.query || {}, api?.queryRequired || [], api?.result || {});
+        } else {
+            mockText += keyNames + ':' + createMockObject(api?.result || {}) + ',';
+        }
+    })
+    return JSBeautify(template.replace('%R%', mockText), beautifyOptions)
 }
 
 export function copy(text: string): void {
