@@ -33,8 +33,10 @@ export interface SimpleAPIListItem {
     method: string;
     path: string;
     title: string;
-    query?: Object;
-    result?: Object;
+    fnName: string;
+    query?: Object | null;
+    result?: Object | null;
+    queryRequired?: string[];
 }
 export interface APIInformationItem {
     add_time: number;
@@ -67,48 +69,3 @@ export interface APIInformationItem {
     __v: number;
     _id: number;
 }
-interface t {
-    clubList: {
-    clubId: string;
-    clubName: string;
-    clubUrl: string;
-    score: number;
-    rank: number;
-    topUsers: {
-    userId: string;
-    locationId: string;
-    displayUserId: string;
-    headImgFileUrl: string;
-    nickname: string;
-    systemLanguage: string;
-    gender: number;
-    grade: number;
-    createDate: string;
-    deviceNo: string;
-    }[];
-    countryUrl: string;
-    area: string;
-    }[];
-    totalNum: number;
-    myRank: {
-    clubId: string;
-    clubName: string;
-    clubUrl: string;
-    score: number;
-    rank: number;
-    topUsers: {
-    userId: string;
-    locationId: string;
-    displayUserId: string;
-    headImgFileUrl: string;
-    nickname: string;
-    systemLanguage: string;
-    gender: number;
-    grade: number;
-    createDate: string;
-    deviceNo: string;
-    }[];
-    countryUrl: string;
-    area: string;
-    };
-    }

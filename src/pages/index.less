@@ -1,18 +1,41 @@
 .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
     display: flex;
     align-items: center;
-    padding: 10px 30px;
+    padding: 20px 40px;
     height: 30px;
-    span {
-        margin-right: 10px;
-    }
+    width: 100vw;
+    background: rgba(255, 255, 255, .8);
+    backdrop-filter: blur(15px);
+   
 }
 
-.code,
-.apis {
-    width: 50%;
+.mr {
+    margin-right: 10px;
 }
+.code,
+.apis{
+    padding-top: 70px;
+    width: 50vw;
+    min-width: 550px;
+    box-sizing: border-box;
+}
+.apis {
+    padding: 65px 0 10px;
+    overflow-y: scroll;
+}
+.code {
+    height: 100%;
+    overflow-y: scroll;
+}
+
 
 .content {
+    height: 100vh;
     display: flex;
+    overflow: hidden;
+    box-sizing: border-box;
 }

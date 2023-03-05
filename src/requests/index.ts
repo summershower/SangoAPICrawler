@@ -17,7 +17,7 @@ const request = async <T>(url: string, method: Method, data = {}): Promise<T> =>
 }
 
 export const getCookie = async () => {
-    await request("/api/user/login", 'post', {
+    await request("/yapiProxy/user/login", 'post', {
         email: "luohaokai@meiqijiacheng.com",
         password: "123456"
     })
@@ -25,18 +25,18 @@ export const getCookie = async () => {
 }
 
 export const getMenu = () => {
-    return request<MenuItem[]>("/api/interface/list_menu?project_id=101", 'get');
+    return request<MenuItem[]>("/yapiProxy/interface/list_menu?project_id=101", 'get');
 }
 
 export const getAPIs = (catid: number) => {
-    return request<ListRequest>('/api/interface/list_cat', 'get', {
+    return request<ListRequest>('/yapiProxy/interface/list_cat', 'get', {
         page: 1,
         limit: 100,
         catid
     })
 }
 export const getAPIInformation = (id: number) => {
-    return request<APIInformationItem>('/api/interface/get', 'get', {
+    return request<APIInformationItem>('/yapiProxy/interface/get', 'get', {
         id
     })
 }
