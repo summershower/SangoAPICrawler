@@ -53,7 +53,7 @@ export const createRequests = (apis: SimpleAPIListItem[]) => {
 
 export function objectToInterface(obj: Object): string {
     if (obj?.toString() !== '[object Object]') return ''
-    if((obj as any).type ==='array') {
+    if ((obj as any).type === 'array') {
         return `${objectToInterface((obj as any).items.properties)}[]`
     }
     const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}?: ${value.type === 'integer' ? 'number' : value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
@@ -78,14 +78,15 @@ export const replaceRepeatInterface = (raw: string, count = 1) => {
     repeat.forEach(([key, value]) => {
         if (value.length > 1) {
             raw = raw.replaceAll(key, `请命名${count}`)
-            const headIndex = raw.indexOf('export');
-            raw = raw.slice(0, headIndex) + `interface 请命名${count++}` + key + '\r\n' + raw.slice(headIndex);
+            const headIndex = raw.indexOf('😅') >=0 ? raw.indexOf('😅') : raw.indexOf('export');
+            raw = raw.slice(0, headIndex) + `export interface 请命名${count++}` + key + '\r\n😅' + raw.slice(headIndex);
         }
     })
     const repeat2 = getRepeatInterface(raw);
     if (repeat2.some(([key, value]) => value.length > 1)) {
         raw = replaceRepeatInterface(raw, count)
     }
+    raw = raw.replaceAll('😅','')
     return raw
 }
 export const createRawType = (fnName: string, response: Object) => {
@@ -130,8 +131,8 @@ export const replaceRepeatMock = (raw: string, count = 1) => {
 
 const createMockObject = (obj: Object): string => {
     if (obj?.toString() !== '[object Object]') return ''
-    if((obj as any).type === 'array') {
-        return `[${createMockObject((obj as any).items.properties)}]`
+    if ((obj as any).type === 'array') {
+        return `mock({'array|20':[${createMockObject((obj as any).items.properties)}]}).array`
     }
     const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'array' ? '[' : ''}${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : '"@' + value.type + '"'}${value.type === 'array' ? '] ' : ''},${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
     return str
@@ -147,13 +148,13 @@ const createMockFn = (query: Object, required: string[], result: Object) => {
         }
     }
     const fnText = '(' + Object.entries(query).sort(requireSortFn).reduce((pre, [key, value], index) => {
-        return `${pre}${key}${required.includes(key) ? '' : '?'}: ${value.type}${index < Object.keys(query).length - 1 ? ',' : ''}`
-    }, '') + ') =>' + `return { ${createMockObject(result)} }`;
+        return `${pre}${key}${required.includes(key) ? '' : '?'}: ${value.type === 'integer' ? 'number' : value.type ==='array' ? 'unknown[]' : value.type}${index < Object.keys(query).length - 1 ? ',' : ''}`
+    }, '') + ') =>' + `{return  ${createMockObject(result)} },`;
     return fnText
 }
 export const createMock = (apis: SimpleAPIListItem[]) => {
     let template = `import { useMock } from '@/utils/hooks';
-    import { Random } from 'mockjs';
+    import { Random, mock } from 'mockjs';
     import * as requests from './requests';
     
     const mockData: Partial<Record<keyof typeof requests, Function | Object>> = {
