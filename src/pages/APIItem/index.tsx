@@ -42,14 +42,23 @@ const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function
             return v
         }))
     }
-    const resultToTree = (result: unknown, currentKey = '0-') => {
+    const resultToTree = (result: unknown, currentKey = '0-'): DataNode[] => {
         if (result?.toString() === '[object Object]') {
+            if ((result as any).type === 'array') {
+                return resultToTree({
+                    " ": {
+                        type: 'array',
+                        properties: (result as any).items.properties,
+                    }
+                   
+                })
+            }
             const tree: DataNode[] = [];
             Object.entries(result).forEach(([key, value], index) => {
                 tree.push({
                     title: TreeTitle(key, value.type, value.description),
                     key: currentKey + index,
-                    children: value.properties ? resultToTree(value.properties, currentKey + index + '-') : value.items? resultToTree(value.items.properties, currentKey + index + '-') : [],
+                    children: value.properties ? resultToTree(value.properties, currentKey + index + '-') : value.items ? resultToTree(value.items.properties, currentKey + index + '-') : [],
                 })
             })
             return tree;

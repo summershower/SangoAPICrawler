@@ -53,6 +53,9 @@ export const createRequests = (apis: SimpleAPIListItem[]) => {
 
 export function objectToInterface(obj: Object): string {
     if (obj?.toString() !== '[object Object]') return ''
+    if((obj as any).type ==='array') {
+        return `${objectToInterface((obj as any).items.properties)}[]`
+    }
     const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}?: ${value.type === 'integer' ? 'number' : value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
     return str
 }
@@ -108,12 +111,6 @@ export const createType = (apis: SimpleAPIListItem[]): string => {
     return resultText;
 }
 
-
-export function objectToMock(obj: Object): string {
-    if (obj?.toString() !== '[object Object]') return ''
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}: ${value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
-    return str
-}
 export const replaceRepeatMock = (raw: string, count = 1) => {
     const repeat = getRepeatInterface(raw);
     repeat.forEach(([key, value]) => {
@@ -133,7 +130,10 @@ export const replaceRepeatMock = (raw: string, count = 1) => {
 
 const createMockObject = (obj: Object): string => {
     if (obj?.toString() !== '[object Object]') return ''
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : '"@' + value.type + '"'};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
+    if((obj as any).type === 'array') {
+        return `[${createMockObject((obj as any).items.properties)}]`
+    }
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'array' ? '[' : ''}${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : '"@' + value.type + '"'}${value.type === 'array' ? '] ' : ''},${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
     return str
 }
 const createMockFn = (query: Object, required: string[], result: Object) => {
@@ -153,6 +153,7 @@ const createMockFn = (query: Object, required: string[], result: Object) => {
 }
 export const createMock = (apis: SimpleAPIListItem[]) => {
     let template = `import { useMock } from '@/utils/hooks';
+    import { Random } from 'mockjs';
     import * as requests from './requests';
     
     const mockData: Partial<Record<keyof typeof requests, Function | Object>> = {

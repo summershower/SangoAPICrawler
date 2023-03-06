@@ -41,7 +41,7 @@ export default function HomePage() {
 
           s.push({
             method: v.method,
-            path: v.path,
+            path: '/tactivity' + v.path,
             title: v.title,
             id: v._id,
             fnName
@@ -59,9 +59,14 @@ export default function HomePage() {
         s.forEach(v => {
           getAPIInformation(v.id).then(res => {
             const query = JSON.parse(res?.['req_body_other'] || '{}')?.properties || {};
-            const result = JSON.parse(res?.['res_body'] || '{}')?.properties?.data?.properties || JSON.parse(res?.['res_body'] || '{}')?.properties?.data?.items?.properties || {};
+            const result = JSON.parse(res?.['res_body'] || '{}')?.properties?.data?.properties || (JSON.parse(res?.['res_body'] || '{}')?.properties?.data?.items?.properties ?
+              JSON.parse(res?.['res_body'] || '{}')?.properties?.data
+              : []) || {};
             const queryRequired = JSON.parse(res?.['req_body_other'] || '{}')?.required || [];
             const resultRequired = JSON.parse(res?.['res_body'] || '{}')?.required || [];
+            console.log(result);
+            
+
 
             setApis(pre => pre.map(item => {
               if (item.id === v.id) {
