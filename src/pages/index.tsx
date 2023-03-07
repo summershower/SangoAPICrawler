@@ -2,28 +2,29 @@ import styles from './index.less'
 import { getCookie, getMenu, getAPIs, getAPIInformation } from '@/requests';
 import { useEffect, useState, useRef } from 'react';
 import type { MenuItem, SimpleAPIListItem } from "@/types";
-import { Select, Radio, Button, message } from 'antd';
+import { Select, Radio, Button, message, Space } from 'antd';
 import type { RadioChangeEvent } from 'antd';
 import APIItem from "./APIItem";
 import Code from './Code'
 export default function HomePage() {
   const [menus, setMenu] = useState<MenuItem[]>([]);
-  const [currentMenu, setCurrentMenu] = useState<number>();
+  const [currentMenu, setCurrentMenu] = useState<number>(101);
+  const [currentActivity, setCurrentActivity] = useState<number>();
   const [Apis, setApis] = useState<SimpleAPIListItem[]>([]);
   const [formatMode, setFormatterMode] = useState<'R' | 'T' | 'M'>('R');
   const codeRef = useRef(null);
 
   useEffect(() => {
     getCookie().then(async () => {
-      let menus = await getMenu();
+      let menus = await getMenu(currentMenu);
       menus.sort((a, b) => b.add_time - a.add_time)
       setMenu(menus);
-      setCurrentMenu(menus[0]._id);
+      setCurrentActivity(menus[0]._id);
     })
-  }, [])
+  }, [currentMenu])
   useEffect(() => {
-    if (currentMenu) {
-      getAPIs(currentMenu).then(r => {
+    if (currentActivity) {
+      getAPIs(currentActivity).then(r => {
         const s: SimpleAPIListItem[] = [];
         r.list?.forEach(v => {
           const words = v.path.split('/');
@@ -41,7 +42,7 @@ export default function HomePage() {
 
           s.push({
             method: v.method,
-            path: '/tactivity' + v.path,
+            path: (currentMenu === 101 ? '/tactivity' : '/activity') + (currentMenu === 101 ? v.path : v.path.replace('/api', '')),
             title: v.title,
             id: v._id,
             fnName
@@ -50,7 +51,7 @@ export default function HomePage() {
 
         // 检查函数名
         s.some(v => {
-          if (!/^[a-z]{1,}[A-Z]{1}\w+/.test(v.fnName)) {
+          if (!/^[a-z]{1,}([A-Z]{1}[a-zA-Z0-9]+){1,}$/.test(v.fnName)) {
             message.warning("存在异常请求方法名，请手动输入")
           }
         })
@@ -64,9 +65,6 @@ export default function HomePage() {
               : []) || {};
             const queryRequired = JSON.parse(res?.['req_body_other'] || '{}')?.required || [];
             const resultRequired = JSON.parse(res?.['res_body'] || '{}')?.required || [];
-            console.log(result);
-            
-
 
             setApis(pre => pre.map(item => {
               if (item.id === v.id) {
@@ -81,10 +79,13 @@ export default function HomePage() {
         })
       })
     }
-  }, [currentMenu])
+  }, [currentActivity])
 
-  function handleChange(value: number) {
+  function handleChangeMenu(value: number) {
     setCurrentMenu(value);
+  }
+  function handleChangeActivity(value: number) {
+    setCurrentActivity(value);
   }
   function onChangeFormatMode(e: RadioChangeEvent) {
     setFormatterMode(e.target.value);
@@ -95,28 +96,42 @@ export default function HomePage() {
   return (
     <>
       <div className={styles.header}>
-        <span className={styles.mr}>选择活动:</span>
-        <Select
-          style={{ width: 400 }}
-          showSearch
-          onChange={handleChange}
-          value={currentMenu}
-          optionFilterProp="label"
-          options={menus.map(v => {
-            return {
-              value: v._id,
-              label: v.name
-            }
-          })}
-        />
-        <span className={styles.mr} style={{ marginLeft: "25px" }}>格式化文件:</span>
-        <Radio.Group onChange={onChangeFormatMode} value={formatMode}>
-          <Radio.Button value="R">Requests</Radio.Button>
-          <Radio.Button value="T">Types</Radio.Button>
-          <Radio.Button value="M">Mocks</Radio.Button>
-        </Radio.Group>
-        <Button type="primary" style={{ marginLeft: "25px" }} onClick={handleCopy}>复制代码</Button>
-
+        <Space size={'large'}>
+          <span >选择分类:</span>
+          <Select
+            style={{ width: 200 }}
+            onChange={handleChangeMenu}
+            value={currentMenu}
+            options={[{
+              value: 101,
+              label: "临时活动服务"
+            }, {
+              value: 83,
+              label: "活动服务"
+            }]}
+          />
+          <span>选择活动:</span>
+          <Select
+            style={{ width: 300 }}
+            showSearch
+            onChange={handleChangeActivity}
+            value={currentActivity}
+            optionFilterProp="label"
+            options={menus.map(v => {
+              return {
+                value: v._id,
+                label: v.name
+              }
+            })}
+          />
+          <span style={{ marginLeft: "25px" }}>格式化文件:</span>
+          <Radio.Group onChange={onChangeFormatMode} value={formatMode}>
+            <Radio.Button value="R">Requests</Radio.Button>
+            <Radio.Button value="T">Types</Radio.Button>
+            <Radio.Button value="M">Mocks</Radio.Button>
+          </Radio.Group>
+          <Button type="primary" style={{ marginLeft: "25px" }} onClick={handleCopy}>复制代码</Button>
+        </Space>
       </div>
       <div className={styles.content}>
         <div className={styles.apis}>

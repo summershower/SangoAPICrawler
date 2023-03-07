@@ -24,8 +24,8 @@ export const getCookie = async () => {
 
 }
 
-export const getMenu = () => {
-    return request<MenuItem[]>("/yapiProxy/interface/list_menu?project_id=101", 'get');
+export const getMenu = (id: number) => {
+    return request<MenuItem[]>("/yapiProxy/interface/list_menu?project_id=" + id, 'get');
 }
 
 export const getAPIs = (catid: number) => {

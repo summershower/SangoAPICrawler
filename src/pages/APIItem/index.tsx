@@ -1,10 +1,9 @@
 import styles from './index.less';
 import type { SimpleAPIListItem } from "@/types";
 import { Input, Spin, Tree } from 'antd'
-import { useState, useEffect, memo, ChangeEvent, ChangeEventHandler } from 'react';
+import { useState, useEffect } from 'react';
 import type { DataNode } from 'antd/es/tree';
 import { DownOutlined } from '@ant-design/icons';
-import { copy } from '@/utils';
 
 const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function }) => {
     const [inputContent, setInputContent] = useState('');
@@ -50,7 +49,7 @@ const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function
                         type: 'array',
                         properties: (result as any).items.properties,
                     }
-                   
+
                 })
             }
             const tree: DataNode[] = [];
@@ -75,7 +74,7 @@ const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function
         <div className={styles.path}>{info?.path}</div>
         <div className={styles.name}>
             <span>函数名：</span>
-            <Input placeholder='输入请求函数名(驼峰命名)' value={info.fnName} onChange={handleInputFnName} status={/^[a-z]{1,}[A-Z]{1}\w+/.test(info.fnName) ? '' : 'error'} />
+            <Input placeholder='输入请求函数名(驼峰命名)' value={info.fnName} onChange={handleInputFnName} status={/^[a-z]{1,}([A-Z]{1}[a-zA-Z0-9]+){1,}$/.test(info.fnName) ? '' : 'error'} />
         </div>
         {info.query !== undefined || info.result !== undefined ? <div className={styles.details}>
             {info.query && <div className={styles.query}>

@@ -2,13 +2,14 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorView, basicSetup } from 'codemirror';
 import type { SimpleAPIListItem } from '@/types';
-import styles from './index.less'
-import { useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, forwardRef, useImperativeHandle, memo } from 'react';
 import { createType, createRequests, createMock } from '@/utils';
 import { copy } from '@/utils';
 let view: EditorView;
 let content = '';
 const Code = forwardRef<{ handleCopy: Function }, { apis: SimpleAPIListItem[], formatMode: 'R' | 'T' | 'M' }>(({ apis, formatMode }, refName) => {
+    console.log('CodeRefresh');
+
     // 初始化编辑器
     function initEditor(content: string) {
         if (view) {
