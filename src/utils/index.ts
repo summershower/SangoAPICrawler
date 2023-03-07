@@ -2,7 +2,7 @@ import JSBeautify from 'js-beautify';
 import { message } from 'antd';
 import { SimpleAPIListItem } from '@/types';
 
-const beautifyOptions = { indent_size: 2, space_in_empty_paren: true };
+const beautifyOptions = { indent_size: 2, space_in_empty_paren: true,keep_array_indentation:true };
 
 export const createRequestFunction = (method: string, fnName: string, url: string, query: Object, title: string, required: string[], result: Object): [string, string] => {
     const apiKey = fnName.replace(/[A-Z]/g, "_$&").toUpperCase();
@@ -132,7 +132,7 @@ export const replaceRepeatMock = (raw: string, count = 1) => {
 const createMockObject = (obj: Object): string => {
     if (obj?.toString() !== '[object Object]') return ''
     if ((obj as any).type === 'array') {
-        return `mock({'array|20':[{${createMockObject((obj as any).items.properties)}]}).array`
+        return `mock({'array|20':[${createMockObject((obj as any).items.properties)}]}).array`
     }
     const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'array' ? '[' : ''}${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : '"@' + value.type + '"'}${value.type === 'array' ? '] ' : ''},${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
     return str
@@ -172,7 +172,8 @@ export const createMock = (apis: SimpleAPIListItem[]) => {
             mockText += keyNames + ':' + createMockObject(api?.result || {}) + ',';
         }
     })
-    return JSBeautify(template.replace('%R%', mockText), beautifyOptions)
+    const output = template.replace('%R%', mockText);
+    return JSBeautify(output, beautifyOptions)
 }
 
 export function copy(text: string): void {
