@@ -107,8 +107,29 @@ const extractOuterArrayInterface = (raw: string): string => {
         raw = raw.replace(v, `export type ${key} = ${key}Item[]`)
         types += `export type ${key + 'Item'} = ${content}\n`
     })
-    
+
     raw = types + raw;
+    return raw
+}
+
+const getInsideArray = (raw: string): string[] => {
+    const reg = /[\w]+\?[ ]*:[ ]*{[^[\]{}]+}\[]/g;
+    const array = raw.match(reg) || [];
+    return array;
+}
+const extractInsideArrayInterface = (raw: string): string => {
+    const matches = getInsideArray(raw);
+    let types = '';
+    matches.forEach(v => {
+        const key = v.match(/\w+(?=( )*\?( )*:( )*{)/)?.[0] || '';
+        const content = v.match(/{[^}]+}/)?.[0] || '';
+        raw = raw.replace(v, `${key}?:${key}Item[]`)
+        types += `export interface ${key + 'Item'} ${content}\n`
+    })
+    raw = types + raw;
+    if (getInsideArray(raw).length) {
+        return extractInsideArrayInterface(raw)
+    }
     return raw
 }
 export const createType = (apis: SimpleAPIListItem[]): string => {
@@ -127,6 +148,9 @@ export const createType = (apis: SimpleAPIListItem[]): string => {
     })
 
     resultText = extractOuterArrayInterface(resultText);
+    console.log(resultText);
+    
+    resultText = extractInsideArrayInterface(resultText);
 
     resultText = JSBeautify(resultText, beautifyOptions);
     return resultText;
