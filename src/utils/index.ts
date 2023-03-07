@@ -132,7 +132,7 @@ export const replaceRepeatMock = (raw: string, count = 1) => {
 const createMockObject = (obj: Object): string => {
     if (obj?.toString() !== '[object Object]') return ''
     if ((obj as any).type === 'array') {
-        return `mock({'array|20':[${createMockObject((obj as any).items.properties)}]}).array`
+        return `mock({'array|20':[{${createMockObject((obj as any).items.properties)}]}).array`
     }
     const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'array' ? '[' : ''}${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : '"@' + value.type + '"'}${value.type === 'array' ? '] ' : ''},${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
     return str
