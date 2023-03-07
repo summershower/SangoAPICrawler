@@ -59,12 +59,25 @@ export default function HomePage() {
 
         s.forEach(v => {
           getAPIInformation(v.id).then(res => {
-            const query = JSON.parse(res?.['req_body_other'] || '{}')?.properties || {};
+            let query = res?.['req_query'].length ? res['req_query'] : JSON.parse(res?.['req_body_other'] || '{}')?.properties || {};
             const result = JSON.parse(res?.['res_body'] || '{}')?.properties?.data?.properties || (JSON.parse(res?.['res_body'] || '{}')?.properties?.data?.items?.properties ?
               JSON.parse(res?.['res_body'] || '{}')?.properties?.data
               : []) || {};
             const queryRequired = JSON.parse(res?.['req_body_other'] || '{}')?.required || [];
             const resultRequired = JSON.parse(res?.['res_body'] || '{}')?.required || [];
+            if (Array.isArray(query)) {
+              let obj: Record<string, any> = {};
+              query.forEach(v => {
+                if (v?.required === "1") {
+                  queryRequired.push(v.name)
+                }
+                obj[(v.name) as string] = {
+                  type: v.type,
+                  description: v.desc || ''
+                }
+              })
+              query = obj;
+            }
 
             setApis(pre => pre.map(item => {
               if (item.id === v.id) {

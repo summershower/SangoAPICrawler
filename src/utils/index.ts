@@ -2,7 +2,7 @@ import JSBeautify from 'js-beautify';
 import { message } from 'antd';
 import { SimpleAPIListItem } from '@/types';
 
-const beautifyOptions = { indent_size: 2, space_in_empty_paren: true,keep_array_indentation:true };
+const beautifyOptions = { indent_size: 2, space_in_empty_paren: true, keep_array_indentation: true };
 
 export const createRequestFunction = (method: string, fnName: string, url: string, query: Object, title: string, required: string[], result: Object): [string, string] => {
     const apiKey = fnName.replace(/[A-Z]/g, "_$&").toUpperCase();
@@ -78,7 +78,7 @@ export const replaceRepeatInterface = (raw: string, count = 1) => {
     repeat.forEach(([key, value]) => {
         if (value.length > 1) {
             raw = raw.replaceAll(key, `请命名${count}`)
-            const headIndex = raw.indexOf('😅') >=0 ? raw.indexOf('😅') : raw.indexOf('export');
+            const headIndex = raw.indexOf('😅') >= 0 ? raw.indexOf('😅') : raw.indexOf('export');
             raw = raw.slice(0, headIndex) + `export interface 请命名${count++}` + key + '\r\n😅' + raw.slice(headIndex);
         }
     })
@@ -86,12 +86,30 @@ export const replaceRepeatInterface = (raw: string, count = 1) => {
     if (repeat2.some(([key, value]) => value.length > 1)) {
         raw = replaceRepeatInterface(raw, count)
     }
-    raw = raw.replaceAll('😅','')
+    raw = raw.replaceAll('😅', '')
     return raw
 }
 export const createRawType = (fnName: string, response: Object) => {
     const typeName = fnName.replace(/^[a-z]{1,}[^A-Z]+/, '');
     return `export interface ${typeName} ${objectToInterface(response)}`;
+}
+const getOuterArray = (raw: string): string[] => {
+    const reg = /export interface[^{]+{[^}]+}[^\[(export)]*\[](?!;)/g;
+    const array = raw.match(reg) || [];
+    return array;
+}
+const extractOuterArrayInterface = (raw: string): string => {
+    const matches = getOuterArray(raw);
+    let types = '';
+    matches.forEach(v => {
+        const key = v.match(/(?<=(export interface ))\w+(?!{)/)?.[0] || '';
+        const content = v.match(/{[^}]+}/)?.[0] || '';
+        raw = raw.replace(v, `export type ${key} = ${key}Item[]`)
+        types += `export type ${key + 'Item'} = ${content}\n`
+    })
+    
+    raw = types + raw;
+    return raw
 }
 export const createType = (apis: SimpleAPIListItem[]): string => {
     let resultText = '';
@@ -107,6 +125,8 @@ export const createType = (apis: SimpleAPIListItem[]): string => {
         v = v.replace('interface ', 'type ').replaceAll('请命名', '= 请命名')
         resultText = resultText.replace('😃', v);
     })
+
+    resultText = extractOuterArrayInterface(resultText);
 
     resultText = JSBeautify(resultText, beautifyOptions);
     return resultText;
@@ -148,7 +168,7 @@ const createMockFn = (query: Object, required: string[], result: Object) => {
         }
     }
     const fnText = '(' + Object.entries(query).sort(requireSortFn).reduce((pre, [key, value], index) => {
-        return `${pre}${key}${required.includes(key) ? '' : '?'}: ${value.type === 'integer' ? 'number' : value.type ==='array' ? 'unknown[]' : value.type}${index < Object.keys(query).length - 1 ? ',' : ''}`
+        return `${pre}${key}${required.includes(key) ? '' : '?'}: ${value.type === 'integer' ? 'number' : value.type === 'array' ? 'unknown[]' : value.type}${index < Object.keys(query).length - 1 ? ',' : ''}`
     }, '') + ') =>' + `{return  ${createMockObject(result)} },`;
     return fnText
 }

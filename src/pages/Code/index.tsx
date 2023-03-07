@@ -8,7 +8,6 @@ import { copy } from '@/utils';
 let view: EditorView;
 let content = '';
 const Code = forwardRef<{ handleCopy: Function }, { apis: SimpleAPIListItem[], formatMode: 'R' | 'T' | 'M' }>(({ apis, formatMode }, refName) => {
-    console.log('CodeRefresh');
 
     // 初始化编辑器
     function initEditor(content: string) {
