@@ -4,6 +4,15 @@ import { SimpleAPIListItem } from '@/types';
 
 const beautifyOptions = { indent_size: 2, space_in_empty_paren: true, keep_array_indentation: true };
 
+function resultToNote(obj: Object): string {
+    if (obj?.toString() !== '[object Object]') return ''
+    if ((obj as any).type === 'array') {
+        return ` * @return {object[]} 返回对象数组 \n${resultToNote((obj as any).items.properties)}`
+    }
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + ` * @return {${value.type === 'integer' ? 'number' : value.type}} ${key} ${ value?.description?.replaceAll('\n', ' ')?.replaceAll('\n', ' ') }\r\n`, '') ;
+    return str
+}
+
 export const createRequestFunction = (method: string, fnName: string, url: string, query: Object, title: string, required: string[], result: Object): [string, string] => {
     const apiKey = fnName.replace(/[A-Z]/g, "_$&").toUpperCase();
     const apiStr = `${apiKey}: '${url}', // ${title}\r\n`
@@ -20,11 +29,11 @@ export const createRequestFunction = (method: string, fnName: string, url: strin
     const fnStr = `/**
     * ${title}
     ${Object.entries(query).sort(requireSortFn).reduce((pre, [key, value]) => pre + `* @param {${value.type === 'integer' ? 'number' : value.type}} ${key} ${value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ')}
-    `, '')}*/
+    `, '')}${resultToNote(result)}*/
    export const ${fnName} = ${Object.keys(query).length ? '(' + Object.entries(query).sort(requireSortFn).reduce((pre, [key, value], index) => {
         return `${pre}${key}${required.includes(key) ? '' : '?'}: ${value.type === 'integer' ? 'number' : value.type}${index < Object.entries(query).length - 1 ? ',' : ''}`
     }, '') + ') =>' : ''}request${Object.keys(result).length ? '<' + typeName + '>' : ''}(API.${apiKey}, '${method.toLowerCase()}'${Object.keys(query).length ? ', { ' + Object.keys(query).sort((a, b) => required.indexOf(b) - required.indexOf(a)).join(',') + ' }' : ''})${Object.keys(query).length ? '();' : ';'}
-    `
+    `;
     return [apiStr, fnStr];
 }
 export const createRequests = (apis: SimpleAPIListItem[]) => {
