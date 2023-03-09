@@ -21,7 +21,7 @@ const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function
         string: '字符',
         boolean: '布尔',
     }
-    const TreeTitle = (key: string, type: string, desc: string) => {
+    const TreeTitle = (key: string, type: string, desc: string, enumArr?: string[], enumDesc?: string) => {
         return (
             <div className={styles.treeTitle}>
                 <div className={styles.typeTag + ' ' + styles[type]}>{typeMap?.[type]}</div>
@@ -29,6 +29,7 @@ const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function
                 {/* <div className={styles.keyName + ' ' + styles[type]}>{type}</div> */}
                 <div className={styles.keyName}>{key}</div>
                 <div className={styles.desc}>{desc}</div>
+                {enumDesc && <div className={styles.enum} style={{marginTop: '5px'}}>{enumDesc}</div>}
             </div>
         )
     }
@@ -49,13 +50,12 @@ const APIItem = ({ info, setApis }: { info: SimpleAPIListItem, setApis: Function
                         type: 'array',
                         properties: (result as any).items.properties,
                     }
-
                 })
             }
             const tree: DataNode[] = [];
             Object.entries(result).forEach(([key, value], index) => {
                 tree.push({
-                    title: TreeTitle(key, value.type, value.description),
+                    title: TreeTitle(key, value.type, value.description, value?.enum, value?.enumDesc),
                     key: currentKey + index,
                     children: value.properties ? resultToTree(value.properties, currentKey + index + '-') : value.items ? resultToTree(value.items.properties, currentKey + index + '-') : [],
                 })

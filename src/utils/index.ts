@@ -9,7 +9,7 @@ function resultToNote(obj: Object): string {
     if ((obj as any).type === 'array') {
         return ` * @return {object[]} 返回对象数组 \n${resultToNote((obj as any).items.properties)}`
     }
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + ` * @return {${value.type === 'integer' ? 'number' : value.type}} ${key} ${ value?.description?.replaceAll('\n', ' ')?.replaceAll('\n', ' ') }\r\n`, '') ;
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + ` * @return {${value.type === 'integer' ? 'number' : value.type}} ${key} ${value?.description?.replaceAll('\n', ' ')?.replaceAll('\n', ' ')} ${value?.enumDesc?.replaceAll('\n', ' ')?.replaceAll('\n', ' ')}\r\n`, '');
     return str
 }
 
@@ -65,7 +65,7 @@ export function objectToInterface(obj: Object): string {
     if ((obj as any).type === 'array') {
         return `${objectToInterface((obj as any).items.properties)}[]`
     }
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}?: ${value.type === 'integer' ? 'number' : value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}?: ${value?.enum?.length ? value?.enum?.map(v=>`"${v}"`).join('|') : value.type === 'integer' ? 'number' : value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''} ${value?.enumDesc?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') || ''}\r\n`, '{\r\n') + '}';
     return str
 }
 
@@ -158,7 +158,7 @@ export const createType = (apis: SimpleAPIListItem[]): string => {
 
     resultText = extractOuterArrayInterface(resultText);
     console.log(resultText);
-    
+
     resultText = extractInsideArrayInterface(resultText);
 
     resultText = JSBeautify(resultText, beautifyOptions);
@@ -187,7 +187,8 @@ const createMockObject = (obj: Object): string => {
     if ((obj as any).type === 'array') {
         return `mock({'array|20':[${createMockObject((obj as any).items.properties)}]}).array`
     }
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'array' ? '[' : ''}${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : '"@' + value.type + '"'}${value.type === 'array' ? '] ' : ''},${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
+    
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'array' ? '[' : ''}${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : value?.mock?.mock ? `'${value.mock.mock}'`:'"@' + value.type + '"'}${value.type === 'array' ? '] ' : ''},${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
     return str
 }
 const createMockFn = (query: Object, required: string[], result: Object) => {
