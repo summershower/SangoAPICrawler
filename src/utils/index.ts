@@ -65,7 +65,7 @@ export function objectToInterface(obj: Object): string {
     if ((obj as any).type === 'array') {
         return `${objectToInterface((obj as any).items.properties)}[]`
     }
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}?: ${value?.enum?.length ? value?.enum?.map(v=>`"${v}"`).join('|') : value.type === 'integer' ? 'number' : value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''} ${value?.enumDesc?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') || ''}\r\n`, '{\r\n') + '}';
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${key}?: ${value?.enum?.length ? value?.enum?.map(v => `"${v}"`).join('|') : value.type === 'integer' ? 'number' : value.type === 'object' ? objectToInterface(value.properties) : value.type === 'array' ? objectToInterface(value.items.properties) + '[]' : value.type};${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''} ${value?.enumDesc?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') || ''}\r\n`, '{\r\n') + '}';
     return str
 }
 
@@ -86,9 +86,9 @@ export const replaceRepeatInterface = (raw: string, count = 1) => {
     const repeat = getRepeatInterface(raw);
     repeat.forEach(([key, value]) => {
         if (value.length > 1) {
-            raw = raw.replaceAll(key, `请命名${count}`)
+            raw = raw.replaceAll(key, `请命名接口${count}`)
             const headIndex = raw.indexOf('😅') >= 0 ? raw.indexOf('😅') : raw.indexOf('export');
-            raw = raw.slice(0, headIndex) + `export interface 请命名${count++}` + key + '\r\n😅' + raw.slice(headIndex);
+            raw = raw.slice(0, headIndex) + `export interface 请命名接口${count++}` + key + '\r\n😅' + raw.slice(headIndex);
         }
     })
     const repeat2 = getRepeatInterface(raw);
@@ -141,6 +141,19 @@ const extractInsideArrayInterface = (raw: string): string => {
     }
     return raw
 }
+
+const repeatEnum = (raw: string): string => {
+    const matches = new Set([...(raw?.match(/"[^\|]+\|[^;]+( )*";/g) || [])]);
+    let enums = '';
+    let index= 0;
+    matches.forEach((v) => {
+        if(!v?.trim()) return
+        raw = raw.replaceAll(v, `${'请命名Enum' + Number(++index)}`)
+        enums += `export type ${'请命名Enum' + Number(index)} = ${v}\n`
+    })
+    raw = enums + raw;
+    return raw
+}
 export const createType = (apis: SimpleAPIListItem[]): string => {
     let resultText = '';
     apis.forEach(api => {
@@ -157,9 +170,10 @@ export const createType = (apis: SimpleAPIListItem[]): string => {
     })
 
     resultText = extractOuterArrayInterface(resultText);
-    console.log(resultText);
 
     resultText = extractInsideArrayInterface(resultText);
+
+    resultText = repeatEnum(resultText);
 
     resultText = JSBeautify(resultText, beautifyOptions);
     return resultText;
@@ -187,8 +201,8 @@ const createMockObject = (obj: Object): string => {
     if ((obj as any).type === 'array') {
         return `mock({'array|20':[${createMockObject((obj as any).items.properties)}]}).array`
     }
-    
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'array' ? '[' : ''}${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : value?.mock?.mock ? `'${value.mock.mock}'`:'"@' + value.type + '"'}${value.type === 'array' ? '] ' : ''},${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
+
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + `${value.type === 'array' ? '"' + key + '|20"' : key}: ${value.type === 'array' ? '[' : ''}${value.type === 'object' ? createMockObject(value.properties) : value.type === 'array' ? createMockObject(value.items.properties) : value?.mock?.mock ? `'${value.mock.mock}'` : '"@' + value.type + '"'}${value.type === 'array' ? '] ' : ''},${value.description ? ' // ' + value?.description?.replaceAll('\r', ' ')?.replaceAll('\n', ' ') : ''}\r\n`, '{\r\n') + '}';
     return str
 }
 const createMockFn = (query: Object, required: string[], result: Object) => {
