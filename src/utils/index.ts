@@ -9,7 +9,7 @@ function resultToNote(obj: Object): string {
     if ((obj as any).type === 'array') {
         return ` * @return {object[]} 返回对象数组 \n${resultToNote((obj as any).items.properties)}`
     }
-    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + ` * @return {${value.type === 'integer' ? 'number' : value.type}} ${key} ${value?.description?.replaceAll('\n', ' ')?.replaceAll('\n', ' ')} ${value?.enumDesc?.replaceAll('\n', ' ')?.replaceAll('\n', ' ')}\r\n`, '');
+    const str = Object.entries(obj).reduce((pre, [key, value]) => pre + ` * @return {${value.type === 'integer' ? 'number' : value.type}} ${key} ${value?.description?.replaceAll('\n', ' ')?.replaceAll('\n', ' ')} ${value?.enumDesc?.replaceAll('\n', ' ')?.replaceAll('\n', ' ') || ''}\r\n`, '');
     return str
 }
 
